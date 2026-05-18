@@ -11,6 +11,10 @@ export const FOOTER_SOCIAL_OPTIONS = [
 
 const DEFAULT_ENABLED_SOCIAL_KEYS = new Set(['facebook', 'instagram', 'tiktok'])
 
+const DEFAULT_STRUCTURE_SECTION_STYLE = {
+  background: 'var(--card-bg)',
+}
+
 export const createFooterSocialLink = (option, overrides = {}) => ({
   id: overrides.id || `footer-social-${option.key}-${crypto.randomUUID()}`,
   key: option.key,
@@ -88,6 +92,7 @@ export const createFooterSection = (id) => ({
   linkGroups: normalizeFooterLinkGroups(),
   align: 'left',
   height: 220,
+  style: DEFAULT_STRUCTURE_SECTION_STYLE,
 })
 
 export const normalizeFooterSection = (section) => {
@@ -107,5 +112,9 @@ export const normalizeFooterSection = (section) => {
     linkGroups: normalizeFooterLinkGroups(section.linkGroups),
     align: section.align || 'left',
     height: Number(section.height) || 220,
+    style: {
+      ...DEFAULT_STRUCTURE_SECTION_STYLE,
+      ...(section.style || {}),
+    },
   }
 }

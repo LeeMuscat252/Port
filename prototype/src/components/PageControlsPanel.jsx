@@ -4,16 +4,14 @@ export default function PageControlsPanel({
   selectPage,
   pageName,
   renameActivePage,
-  addPage,
-  duplicateActivePage,
-  activePage,
-  deleteActivePage,
 }) {
+  const visiblePages = pages.filter((page) => page.name !== 'About Us')
+
   return (
     <section className="rail-box page-box">
       <h2>Pages</h2>
       <div className="page-list">
-        {pages.map((page) => (
+        {visiblePages.map((page) => (
           <button
             key={page.id}
             type="button"
@@ -28,17 +26,6 @@ export default function PageControlsPanel({
         Page Name
         <input value={pageName} onChange={(event) => renameActivePage(event.target.value)} />
       </label>
-      <div className="button-row compact">
-        <button type="button" onClick={addPage}>
-          New Page
-        </button>
-        <button type="button" onClick={duplicateActivePage} disabled={!activePage}>
-          Duplicate
-        </button>
-        <button type="button" onClick={deleteActivePage} disabled={pages.length <= 1}>
-          Delete
-        </button>
-      </div>
     </section>
   )
 }

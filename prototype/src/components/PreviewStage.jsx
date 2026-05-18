@@ -4,8 +4,6 @@ import NavigationPreview from './NavigationPreview'
 import { getEnabledFooterSocialLinks, getFooterSocialGlyph, normalizeFooterLinkGroups } from '../utils/footerUtils'
 
 export default function PreviewStage({
-  isEditorCollapsed,
-  setIsEditorCollapsed,
   onDragEnd,
   dropIndex,
   onDropZoneEnter,
@@ -14,8 +12,11 @@ export default function PreviewStage({
   sections,
   activeSectionId,
   setActiveSectionId,
+  activeFloatingButtonId,
   setActiveFloatingButtonId,
+  activeFloatingTextId,
   setActiveFloatingTextId,
+  activeFloatingImageId,
   setActiveFloatingImageId,
   setActiveCarouselImageId,
   resizingSectionId,
@@ -136,17 +137,16 @@ export default function PreviewStage({
             setActiveCarouselImageId(null)
             setActiveFloatingCarouselId(null)
             setActiveFloatingCarouselImageId(null)
-            setIsEditorCollapsed(false)
           }
         }
-      } catch (err) {
+      } catch {
         /* ignore */
       }
     }
 
     document.addEventListener('pointerup', handler, true)
     return () => document.removeEventListener('pointerup', handler, true)
-  }, [activeSectionId, setActiveSectionId, setActiveNestedItemId, setActiveFloatingButtonId, setActiveFloatingTextId, setActiveFloatingImageId, setActiveCarouselImageId, setActiveFloatingCarouselId, setActiveFloatingCarouselImageId, setIsEditorCollapsed])
+  }, [activeSectionId, setActiveSectionId, setActiveNestedItemId, setActiveFloatingButtonId, setActiveFloatingTextId, setActiveFloatingImageId, setActiveCarouselImageId, setActiveFloatingCarouselId, setActiveFloatingCarouselImageId])
 
   // Fallback selection helper: sometimes pointer events prevent clicks reaching
   // higher-level handlers, so ensure pointerup sets the active section reliably.
@@ -161,7 +161,6 @@ export default function PreviewStage({
     setActiveCarouselImageId(opts.carouselImageId ?? null)
     setActiveFloatingCarouselId(null)
     setActiveFloatingCarouselImageId(null)
-    setIsEditorCollapsed(false)
   }
   return (
     <section className="frame-stage" onDragEnd={onDragEnd}>
@@ -189,6 +188,7 @@ export default function PreviewStage({
                 onDragStart={(event) => onSectionDragStart(event, section.id)}
                 onClick={() => {
                   setActiveSectionId(section.id)
+                  setActiveNestedItemId(null)
                   setActiveFloatingButtonId(null)
                   setActiveFloatingTextId(null)
                   setActiveFloatingImageId(null)
@@ -197,7 +197,6 @@ export default function PreviewStage({
                   )
                   setActiveFloatingCarouselId(null)
                   setActiveFloatingCarouselImageId(null)
-                  setIsEditorCollapsed(false)
                 }}
                 style={(() => {
                   // Build inline style for the article while mapping some section style properties
@@ -333,7 +332,6 @@ export default function PreviewStage({
                       setActiveCarouselImageId(section.images?.[idx]?.id ?? section.images?.[0]?.id ?? null)
                       setActiveFloatingCarouselId(null)
                       setActiveFloatingCarouselImageId(null)
-                      setIsEditorCollapsed(false)
                     }}
                   />
                 )}
@@ -549,7 +547,9 @@ export default function PreviewStage({
             <div
               key={button.id}
               data-floating-button-id={button.id}
-              className={`button-positioner floating ${draggingButton?.sectionId === button.id ? 'active' : ''}`}
+              className={`button-positioner floating ${
+                draggingButton?.sectionId === button.id || activeFloatingButtonId === button.id ? 'active' : ''
+              }`}
               style={{
                 position: 'absolute',
                 left: `${button.offsetX || 0}px`,
@@ -561,6 +561,8 @@ export default function PreviewStage({
                 setActiveFloatingButtonId(button.id)
                 setActiveFloatingTextId(null)
                 setActiveFloatingImageId(null)
+                setActiveFloatingCarouselId(null)
+                setActiveFloatingCarouselImageId(null)
               }}
               onPointerDown={(event) =>
                 startButtonDrag(event, button.id, button.offsetX || 0, button.offsetY || 0)
@@ -576,7 +578,10 @@ export default function PreviewStage({
                   console.log('PreviewStage: floating button click', button.id)
                   setActiveSectionId(null)
                   setActiveFloatingButtonId(button.id)
-                  setIsEditorCollapsed(false)
+                  setActiveFloatingTextId(null)
+                  setActiveFloatingImageId(null)
+                  setActiveFloatingCarouselId(null)
+                  setActiveFloatingCarouselImageId(null)
                 }}
               >
                 {button.label}
@@ -601,17 +606,12 @@ export default function PreviewStage({
               }}
               onClick={(event) => {
                 event.stopPropagation()
-                // If already selected, deselect it
-                if (activeFloatingCarouselId === carouselBox.id) {
-                  setActiveFloatingCarouselId(null)
-                } else {
-                  setActiveSectionId(null)
-                  setActiveFloatingButtonId(null)
-                  setActiveFloatingTextId(null)
-                  setActiveFloatingImageId(null)
-                  setActiveFloatingCarouselId(carouselBox.id)
-                    setIsEditorCollapsed(false)
-                }
+                setActiveSectionId(null)
+                setActiveFloatingButtonId(null)
+                setActiveFloatingTextId(null)
+                setActiveFloatingImageId(null)
+                setActiveFloatingCarouselId(carouselBox.id)
+                setActiveFloatingCarouselImageId(carouselBox.images?.[0]?.id ?? null)
               }}
               onPointerDown={(event) =>
                 startFloatingCarouselDrag(event, carouselBox.id, carouselBox.offsetX || 0, carouselBox.offsetY || 0)
@@ -627,7 +627,6 @@ export default function PreviewStage({
                       setActiveFloatingImageId(null)
                       setActiveFloatingCarouselId(carouselBox.id)
                       setActiveFloatingCarouselImageId(carouselBox.images?.[idx]?.id ?? carouselBox.images?.[0]?.id ?? null)
-                      setIsEditorCollapsed(false)
                     }}
                   />
                   <div
@@ -698,7 +697,9 @@ export default function PreviewStage({
           {floatingTexts.map((textBox) => (
             <div
               key={textBox.id}
-              className={`floating-text-box ${draggingFloatingText?.textId === textBox.id ? 'active' : ''}`}
+              className={`floating-text-box ${
+                draggingFloatingText?.textId === textBox.id || activeFloatingTextId === textBox.id ? 'active' : ''
+              }`}
               style={{
                 left: `${textBox.offsetX || 0}px`,
                 top: `${textBox.offsetY || 0}px`,
@@ -711,6 +712,8 @@ export default function PreviewStage({
                 setActiveFloatingButtonId(null)
                 setActiveFloatingTextId(textBox.id)
                 setActiveFloatingImageId(null)
+                setActiveFloatingCarouselId(null)
+                setActiveFloatingCarouselImageId(null)
               }}
               onPointerDown={(event) =>
                 startFloatingTextDrag(event, textBox.id, textBox.offsetX || 0, textBox.offsetY || 0)
@@ -723,7 +726,9 @@ export default function PreviewStage({
             <figure
               key={imageBox.id}
               data-floating-image-id={imageBox.id}
-              className={`floating-image-box ${draggingFloatingImage?.imageId === imageBox.id ? 'active' : ''}`}
+              className={`floating-image-box ${
+                draggingFloatingImage?.imageId === imageBox.id || activeFloatingImageId === imageBox.id ? 'active' : ''
+              }`}
               style={{
                 left: `${imageBox.offsetX || 0}px`,
                 top: `${imageBox.offsetY || 0}px`,
@@ -735,6 +740,8 @@ export default function PreviewStage({
                 setActiveFloatingButtonId(null)
                 setActiveFloatingTextId(null)
                 setActiveFloatingImageId(imageBox.id)
+                setActiveFloatingCarouselId(null)
+                setActiveFloatingCarouselImageId(null)
               }}
               onPointerDown={(event) =>
                 startFloatingImageDrag(event, imageBox.id, imageBox.offsetX || 0, imageBox.offsetY || 0)

@@ -2,17 +2,11 @@ import { useEffect, useState } from 'react'
 
 export default function CarouselPreview({ section, onSelect }) {
   const images = Array.isArray(section.images) ? section.images.filter(Boolean) : []
-  const [activeIndex, setActiveIndex] = useState(0)
-
-  useEffect(() => {
-    if (activeIndex >= images.length) {
-      setActiveIndex(0)
-    }
-  }, [activeIndex, images.length])
-
-  useEffect(() => {
-    setActiveIndex(0)
-  }, [section.id])
+  const [carouselState, setCarouselState] = useState({ sectionId: section.id, activeIndex: 0 })
+  const activeIndex =
+    carouselState.sectionId === section.id && carouselState.activeIndex < images.length
+      ? carouselState.activeIndex
+      : 0
 
   useEffect(() => {
     if (!section.autoplay || images.length < 2) {
@@ -21,33 +15,52 @@ export default function CarouselPreview({ section, onSelect }) {
 
     const delay = Math.max(1000, Number(section.interval) || 4000)
     const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % images.length)
+      setCarouselState((current) => {
+        const currentIndex = current.sectionId === section.id ? current.activeIndex : 0
+        return {
+          sectionId: section.id,
+          activeIndex: (currentIndex + 1) % images.length,
+        }
+      })
     }, delay)
 
     return () => window.clearInterval(timer)
-  }, [images.length, section.autoplay, section.interval])
+  }, [images.length, section.autoplay, section.id, section.interval])
 
   if (images.length === 0) {
     return <div className="carousel-empty-state">No images configured for this carousel.</div>
   }
 
   const showCaptions = section.showCaptions !== false
+  const carouselStyle = {
+    height: `${section.height || 320}px`,
+    '--carousel-image-width': `${Number(section.imageWidth) || 100}%`,
+    '--carousel-image-height': section.imageHeight ? `${Number(section.imageHeight)}px` : '100%',
+  }
 
   const goToSlide = (delta) => {
-    setActiveIndex((current) => (current + delta + images.length) % images.length)
+    setCarouselState({
+      sectionId: section.id,
+      activeIndex: (activeIndex + delta + images.length) % images.length,
+    })
   }
 
     return (
-    <div className={`carousel-preview align-${section.align || 'center'}`} style={{ height: `${section.height || 320}px` }}>
+    <div className={`carousel-preview align-${section.align || 'center'}`} style={carouselStyle}>
       <div className="carousel-viewport">
         <div className="carousel-track" style={{ transform: `translateX(-${activeIndex * 100}%)` }}>
           {images.map((image, index) => (
-            <figure key={image.id} className="carousel-slide" style={image.style || {}}>
+            <figure key={image.id} className="carousel-slide">
               <img
                 src={image.src}
                 alt={image.alt || 'Carousel slide'}
                 draggable={false}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', ...(image.style || {}) }}
+                style={{
+                  ...(image.style || {}),
+                  width: 'var(--carousel-image-width, 100%)',
+                  height: 'var(--carousel-image-height, 100%)',
+                  objectFit: 'cover',
+                }}
                 onClick={() => onSelect?.(index)}
               />
             </figure>
@@ -102,7 +115,7 @@ export default function CarouselPreview({ section, onSelect }) {
               onClick={(event) => {
                 onSelect?.(index)
                 event.stopPropagation()
-                setActiveIndex(index)
+                setCarouselState({ sectionId: section.id, activeIndex: index })
               }}
               aria-label={`Show slide ${index + 1}`}
               aria-pressed={index === activeIndex}

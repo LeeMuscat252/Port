@@ -49,6 +49,8 @@ const buildCarouselMarkup = ({
   carouselId,
   images,
   height,
+  imageWidth = 100,
+  imageHeight = null,
   align = 'center',
   showCaptions = true,
   autoplay = false,
@@ -83,7 +85,7 @@ const buildCarouselMarkup = ({
 
   return `
   <div class="carousel-export" ${carouselAttributes}>
-    <div class="carousel-preview align-${align}" style="height:${height || 320}px;${wrapperStyle ? ` ${wrapperStyle}` : ''}">
+    <div class="carousel-preview align-${align}" style="height:${height || 320}px; --carousel-image-width:${Number(imageWidth) || 100}%; --carousel-image-height:${imageHeight ? `${Number(imageHeight)}px` : '100%'};${wrapperStyle ? ` ${wrapperStyle}` : ''}">
       <div class="carousel-viewport">
         <div class="carousel-track">${slideMarkup}
         </div>
@@ -200,10 +202,11 @@ const buildDocumentStyleSheet = ({
     .section-carousel .carousel-preview { border-radius: 0; border: none; background: var(--bg-secondary); }
     /* remove border/shadow from carousel in exported HTML so hero sections don't show framed box */
     .carousel-preview { display: flex; flex-direction: column; width: 100%; height: 100%; border: none; border-radius: 0; background: var(--card-bg); overflow: hidden; box-shadow: none; }
-    .carousel-viewport { flex: 1; overflow: hidden; }
+    .carousel-viewport { flex: 1; min-height: 0; overflow: hidden; }
     .carousel-track { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; height: 100%; transition: transform 0.3s ease; }
-    .carousel-slide { margin: 0; display: grid; padding: 0; gap: 0; height: 100%; align-content: stretch; }
-    .carousel-slide img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; display: block; }
+    .carousel-slide { margin: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; padding: 0; gap: 0; height: 100%; min-height: 0; align-content: stretch; }
+    .carousel-slide img { width: var(--carousel-image-width, 100%); height: var(--carousel-image-height, 100%); max-width: 100%; max-height: 100%; object-fit: cover; border-radius: 0; display: block; }
+    .carousel-slide figcaption { width: min(var(--carousel-image-width, 100%), 100%); margin: 6px 0 0; color: var(--text-primary); line-height: 1.4; }
     .carousel-footer { padding: 10px 12px 12px; display: grid; gap: 10px; }
     .carousel-controls { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
     .carousel-control-btn { border: 1px solid var(--button-bg); background: var(--card-bg); color: var(--button-bg); border-radius: 6px; padding: 6px 12px; font-weight: 600; }
@@ -479,6 +482,8 @@ export const buildHtmlDocument = (
       carouselId: section.id,
       images: carouselImages,
       height: section.height || 320,
+      imageWidth: section.imageWidth || 100,
+      imageHeight: section.imageHeight || null,
       align: section.align || 'center',
       showCaptions: section.showCaptions !== false,
       autoplay: section.autoplay,
@@ -709,6 +714,8 @@ ${bodyMarkup}${nestedItemsMarkup}
       carouselId: carouselBox.id,
       images: carouselImages,
       height: carouselBox.height || 630,
+      imageWidth: carouselBox.imageWidth || 100,
+      imageHeight: carouselBox.imageHeight || null,
       align: carouselBox.align || 'center',
       showCaptions: carouselBox.showCaptions !== false,
       autoplay: carouselBox.autoplay,
